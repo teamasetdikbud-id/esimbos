@@ -689,8 +689,13 @@
                             <input type="text" id="inp-pej-smp-nama" placeholder="Nama Lengkap & Gelar" class="w-full px-3 py-2 border rounded-lg text-sm mb-2">
                             <input type="text" id="inp-pej-smp-nip" placeholder="NIP Pejabat" class="w-full px-3 py-2 border rounded-lg text-sm">
                         </div>
+                        <div class="border p-3 rounded-lg bg-red-50 mt-4">
+                            <h4 class="text-xs font-bold text-red-800 mb-2 border-b border-red-200 pb-1"><i class="fa-regular fa-clock mr-1"></i> Pengaturan Waktu Mundur</h4>
+                            <label class="block text-[10px] font-bold text-red-800 mb-1">Batas Akhir Penginputan BOS</label>
+                            <input type="datetime-local" id="inp-batas-waktu" class="w-full px-3 py-2 border border-red-200 rounded-lg text-sm focus:ring-primary mb-1">
+                        </div>
                         <div class="border p-3 rounded-lg bg-indigo-50 mt-4">
-    <h4 class="text-xs font-bold text-indigo-800 mb-2 border-b border-indigo-200 pb-1"><i class="fa-solid fa-bullhorn mr-1"></i> Papan Pengumuman Login</h4>
+                            <h4 class="text-xs font-bold text-indigo-800 mb-2 border-b border-indigo-200 pb-1"><i class="fa-solid fa-bullhorn mr-1"></i> Papan Pengumuman Login</h4>
    <textarea id="inp-pengumuman-login" rows="4" placeholder="Ketik pengumuman atau info di sini..." class="w-full px-3 py-2 border border-indigo-200 rounded-lg text-sm mb-3 focus:ring-primary"></textarea>
 <label class="block text-[10px] font-bold text-indigo-800 mb-1">Link File Download (Opsional)</label>
 <input type="url" id="inp-link-pengumuman" placeholder="Paste link Google Drive file di sini..." class="w-full px-3 py-2 border border-indigo-200 rounded-lg text-sm mb-1 focus:ring-primary">
@@ -901,7 +906,7 @@
         }
 
         // --- AUTH & SETUP ---
-        document.addEventListener("DOMContentLoaded", function() { apiCall('getPengaturanGlobal').then(res => { if(res.success) { pengaturanGlobal = res.data; const pengumuman = res.data.pengumuman_login || "Tidak ada informasi terbaru saat ini."; const linkFile = res.data.link_pengumuman || ""; const el = document.getElementById('login-pengumuman-content'); if(el) { let htmlContent = `<div>${pengumuman}</div>`; if(linkFile && linkFile.trim() !== "") { htmlContent += `<div class="mt-6 pt-4 border-t border-gray-100"><a href="${linkFile}" target="_blank" class="flex items-center justify-center gap-2 w-full bg-primary hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-100 group"><i class="fa-solid fa-cloud-arrow-down animate-bounce group-hover:animate-none"></i><span>Unduh Dokumen</span></a></div>`; } el.innerHTML = htmlContent; } } }); const u = localStorage.getItem('simbos_user'); const r = localStorage.getItem('simbos_role'); if (u && r) { currentUser = JSON.parse(u); currentRole = r; document.getElementById('loginPage').classList.add('hidden'); document.getElementById('loginPage').classList.remove('flex'); document.getElementById('dashboardPage').classList.remove('hidden'); document.getElementById('dashboardPage').classList.add('flex'); setupDashboard(currentRole); } });
+        document.addEventListener("DOMContentLoaded", function() { apiCall('getPengaturanGlobal').then(res => { if(res.success) { pengaturanGlobal = res.data; startCountdown(res.data.batas_waktu_bos); const pengumuman = res.data.pengumuman_login || "Tidak ada informasi terbaru saat ini."; const linkFile = res.data.link_pengumuman || ""; const el = document.getElementById('login-pengumuman-content'); if(el) { let htmlContent = `<div>${pengumuman}</div>`; if(linkFile && linkFile.trim() !== "") { htmlContent += `<div class="mt-6 pt-4 border-t border-gray-100"><a href="${linkFile}" target="_blank" class="flex items-center justify-center gap-2 w-full bg-primary hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-100 group"><i class="fa-solid fa-cloud-arrow-down animate-bounce group-hover:animate-none"></i><span>Unduh Dokumen</span></a></div>`; } el.innerHTML = htmlContent; } } }); const u = localStorage.getItem('simbos_user'); const r = localStorage.getItem('simbos_role'); if (u && r) { currentUser = JSON.parse(u); currentRole = r; document.getElementById('loginPage').classList.add('hidden'); document.getElementById('loginPage').classList.remove('flex'); document.getElementById('dashboardPage').classList.remove('hidden'); document.getElementById('dashboardPage').classList.add('flex'); setupDashboard(currentRole); } });
         
         async function handleLogin(e, role) { 
             e.preventDefault(); 
@@ -1111,6 +1116,7 @@
                 document.getElementById('inp-pej-smp-nip').value = pengaturanGlobal.manager_smp_nip || '';
                 document.getElementById('inp-pengumuman-login').value = pengaturanGlobal.pengumuman_login || '';
                 document.getElementById('inp-link-pengumuman').value = pengaturanGlobal.link_pengumuman || '';
+                document.getElementById('inp-batas-waktu').value = pengaturanGlobal.batas_waktu_bos || '';
             }
 
             switchSettingTab('akun');
@@ -1147,7 +1153,8 @@
                 manager_smp_nama: document.getElementById('inp-pej-smp-nama').value,
                 manager_smp_nip: document.getElementById('inp-pej-smp-nip').value,
     pengumuman_login: document.getElementById('inp-pengumuman-login').value,
-    link_pengumuman: document.getElementById('inp-link-pengumuman').value
+    link_pengumuman: document.getElementById('inp-link-pengumuman').value,
+batas_waktu_bos: document.getElementById('inp-batas-waktu').value
             };
             showLoading('Menyimpan Data Pejabat...');
             try {
@@ -2172,45 +2179,46 @@
 
         function logout() { localStorage.removeItem('simbos_user'); localStorage.removeItem('simbos_role'); location.reload(); }
         // ==============================================================================
-        // FITUR COUNTDOWN TIMER (WAKTU MUNDUR)
+       // ==============================================================================
+        // FITUR COUNTDOWN TIMER DINAMIS
         // ==============================================================================
-        // GANTI TANGGAL DAN JAM BATAS AKHIR DI BAWAH INI
-        // Format: "YYYY-MM-DDTHH:mm:ss" (Contoh: "2026-06-30T23:59:59")
-        const BATAS_WAKTU = new Date("2026-06-30T23:59:59").getTime();
+        let timerInterval = null;
 
-        function updateCountdown() {
-            const sekarang = new Date().getTime();
-            const selisih = BATAS_WAKTU - sekarang;
+        function startCountdown(waktuStr) {
+            if(timerInterval) clearInterval(timerInterval);
             const timerDisplay = document.getElementById("timer-display");
-
-            // Jika waktu sudah habis
-            if (selisih < 0) {
-                if(timerDisplay) {
-                    timerDisplay.innerHTML = "<span class='text-xs font-bold text-red-600 bg-red-100 px-3 py-1 rounded-full'>WAKTU PENGINPUTAN HABIS</span>";
-                }
+            
+            if(!waktuStr) {
+                if(timerDisplay) timerDisplay.innerHTML = "<span class='text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full'>Waktu Belum Diatur Admin</span>";
                 return;
             }
 
-            // Perhitungan waktu
-            const hari = Math.floor(selisih / (1000 * 60 * 60 * 24));
-            const jam = Math.floor((selisih % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const menit = Math.floor((selisih % (1000 * 60 * 60)) / (1000 * 60));
-            const detik = Math.floor((selisih % (1000 * 60)) / 1000);
+            const batasWaktu = new Date(waktuStr).getTime();
 
-            // Menampilkan hasil dan menambahkan angka '0' di depan jika satuan
-            if(document.getElementById("cd-hari")) document.getElementById("cd-hari").innerText = String(hari).padStart(2, '0');
-            if(document.getElementById("cd-jam")) document.getElementById("cd-jam").innerText = String(jam).padStart(2, '0');
-            if(document.getElementById("cd-menit")) document.getElementById("cd-menit").innerText = String(menit).padStart(2, '0');
-            if(document.getElementById("cd-detik")) document.getElementById("cd-detik").innerText = String(detik).padStart(2, '0');
+            function update() {
+                const sekarang = new Date().getTime();
+                const selisih = batasWaktu - sekarang;
+
+                if (selisih < 0) {
+                    if(timerDisplay) timerDisplay.innerHTML = "<span class='text-xs font-bold text-red-600 bg-red-100 px-3 py-1 rounded-full'>WAKTU PENGINPUTAN HABIS</span>";
+                    clearInterval(timerInterval);
+                    return;
+                }
+
+                const hari = Math.floor(selisih / (1000 * 60 * 60 * 24));
+                const jam = Math.floor((selisih % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const menit = Math.floor((selisih % (1000 * 60 * 60)) / (1000 * 60));
+                const detik = Math.floor((selisih % (1000 * 60)) / 1000);
+
+                if(document.getElementById("cd-hari")) document.getElementById("cd-hari").innerText = String(hari).padStart(2, '0');
+                if(document.getElementById("cd-jam")) document.getElementById("cd-jam").innerText = String(jam).padStart(2, '0');
+                if(document.getElementById("cd-menit")) document.getElementById("cd-menit").innerText = String(menit).padStart(2, '0');
+                if(document.getElementById("cd-detik")) document.getElementById("cd-detik").innerText = String(detik).padStart(2, '0');
+            }
+
+            update();
+            timerInterval = setInterval(update, 1000);
         }
-
-        // Jalankan fungsi setiap 1 detik
-        setInterval(updateCountdown, 1000);
-        
-        // Panggil langsung saat halaman pertama kali dimuat
-        document.addEventListener("DOMContentLoaded", function() {
-            updateCountdown();
-        });
     </script>
 </body>
 </html>
