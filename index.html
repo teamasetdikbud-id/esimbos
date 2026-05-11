@@ -173,13 +173,23 @@
     <main id="loginPage" class="flex-1 flex flex-col md:flex-row items-center mt-12 md:mt-16 p-4 relative overflow-hidden h-full">
         <div class="w-full md:w-1/2 flex justify-center md:justify-start md:pl-16 lg:pl-32 z-20 h-full items-center">
             <div class="glass-login login-slide-in w-full max-w-md rounded-[2rem] p-8 relative transition-all duration-300">
-                <div class="text-center mb-6">
-                    <div class="inline-block p-2 bg-white/40 backdrop-blur-md rounded-full mb-3 shadow-sm border border-white/60">
-                        <img src="https://i.ibb.co.com/MyM5n9S7/logo-transparan.png" alt="Logo Donggala" class="h-14 w-14 object-contain drop-shadow-md rounded-full">
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-1">Selamat Datang</h2>
-                    <p class="text-sm text-gray-700 font-medium">Silakan login untuk mengakses SIMBOS</p>
-                </div>
+               <div class="text-center mb-6">
+    <div class="inline-block p-2 bg-white/40 backdrop-blur-md rounded-full mb-3 shadow-sm border border-white/60">
+        <img src="https://i.ibb.co.com/MyM5n9S7/logo-transparan.png" alt="Logo Donggala" class="h-14 w-14 object-contain drop-shadow-md rounded-full">
+    </div>
+
+    <div class="mb-4 bg-red-50/80 border border-red-200 rounded-2xl p-2 inline-block backdrop-blur-sm shadow-sm mx-auto min-w-[250px]">
+        <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1.5"><i class="fa-regular fa-clock mr-1"></i>Batas Waktu Penginputan BOS</p>
+        <div class="flex gap-3 justify-center text-red-700 font-extrabold text-sm" id="timer-display">
+            <div class="flex flex-col items-center"><span id="cd-hari" class="text-xl leading-none">00</span><span class="text-[8px] font-bold uppercase mt-1 text-red-500">Hari</span></div><span class="text-xl leading-none opacity-50">:</span>
+            <div class="flex flex-col items-center"><span id="cd-jam" class="text-xl leading-none">00</span><span class="text-[8px] font-bold uppercase mt-1 text-red-500">Jam</span></div><span class="text-xl leading-none opacity-50">:</span>
+            <div class="flex flex-col items-center"><span id="cd-menit" class="text-xl leading-none">00</span><span class="text-[8px] font-bold uppercase mt-1 text-red-500">Menit</span></div><span class="text-xl leading-none opacity-50">:</span>
+            <div class="flex flex-col items-center"><span id="cd-detik" class="text-xl leading-none">00</span><span class="text-[8px] font-bold uppercase mt-1 text-red-500">Detik</span></div>
+        </div>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-800 mb-1">Selamat Datang</h2>
+    <p class="text-sm text-gray-700 font-medium">Silakan login untuk mengakses SIMBOS</p>
+</div>
                 <div class="flex border-b border-gray-400/50 mb-6 cursor-pointer">
                     <button type="button" onclick="switchTab('dinas')" id="tab-dinas" class="flex-1 pb-3 text-sm tab-active transition-colors duration-200"><i class="fa-solid fa-building-user mr-2"></i>Login Dinas</button>
                     <button type="button" onclick="switchTab('sekolah')" id="tab-sekolah" class="flex-1 pb-3 text-sm text-gray-600 font-medium hover:text-gray-800 transition-colors duration-200"><i class="fa-solid fa-graduation-cap mr-2"></i>Login Sekolah</button>
@@ -2161,6 +2171,46 @@
         }
 
         function logout() { localStorage.removeItem('simbos_user'); localStorage.removeItem('simbos_role'); location.reload(); }
+        // ==============================================================================
+        // FITUR COUNTDOWN TIMER (WAKTU MUNDUR)
+        // ==============================================================================
+        // GANTI TANGGAL DAN JAM BATAS AKHIR DI BAWAH INI
+        // Format: "YYYY-MM-DDTHH:mm:ss" (Contoh: "2026-06-30T23:59:59")
+        const BATAS_WAKTU = new Date("2026-06-30T23:59:59").getTime();
+
+        function updateCountdown() {
+            const sekarang = new Date().getTime();
+            const selisih = BATAS_WAKTU - sekarang;
+            const timerDisplay = document.getElementById("timer-display");
+
+            // Jika waktu sudah habis
+            if (selisih < 0) {
+                if(timerDisplay) {
+                    timerDisplay.innerHTML = "<span class='text-xs font-bold text-red-600 bg-red-100 px-3 py-1 rounded-full'>WAKTU PENGINPUTAN HABIS</span>";
+                }
+                return;
+            }
+
+            // Perhitungan waktu
+            const hari = Math.floor(selisih / (1000 * 60 * 60 * 24));
+            const jam = Math.floor((selisih % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const menit = Math.floor((selisih % (1000 * 60 * 60)) / (1000 * 60));
+            const detik = Math.floor((selisih % (1000 * 60)) / 1000);
+
+            // Menampilkan hasil dan menambahkan angka '0' di depan jika satuan
+            if(document.getElementById("cd-hari")) document.getElementById("cd-hari").innerText = String(hari).padStart(2, '0');
+            if(document.getElementById("cd-jam")) document.getElementById("cd-jam").innerText = String(jam).padStart(2, '0');
+            if(document.getElementById("cd-menit")) document.getElementById("cd-menit").innerText = String(menit).padStart(2, '0');
+            if(document.getElementById("cd-detik")) document.getElementById("cd-detik").innerText = String(detik).padStart(2, '0');
+        }
+
+        // Jalankan fungsi setiap 1 detik
+        setInterval(updateCountdown, 1000);
+        
+        // Panggil langsung saat halaman pertama kali dimuat
+        document.addEventListener("DOMContentLoaded", function() {
+            updateCountdown();
+        });
     </script>
 </body>
 </html>
