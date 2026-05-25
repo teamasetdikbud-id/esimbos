@@ -81,7 +81,7 @@
         // ==========================================================
         // ⚠️ PASTE URL APPSCRIPT ANDA DI BAWAH INI ⚠️
         // ==========================================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbzOSR6Ds4NrmLzXoGl9Rt9RgFH0lbEF82NZryfheQoOks7wmBgMfsnzdInsS2SNUlaCew/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbyPN3UgyIZmy0vGIgYC_lD3GKfjW72EmYyKelRKdm0LObZSSiQg5oktCG9ka1DwaEEfIw/exec"; 
 
         // ==========================================================
         // ⚠️ PASTE URL PANDUAN DAN FORMAT LPJ DI BAWAH INI ⚠️
@@ -1806,7 +1806,7 @@ batas_waktu_bos: document.getElementById('inp-batas-waktu').value
                     let harga = parseInt(item.total_harga) || 0; let hargaSatuan = parseInt(item.harga_satuan) || 0; let itemTahap = getTahapFromDate(item.tgl_bast); let kod = item.kodefikasi || '';
                     let badgeColor = kod.includes('PEGAWAI') ? 'bg-amber-50 text-amber-600 border-amber-200' : (kod.includes('BARANG DAN JASA') ? 'bg-purple-50 text-purple-600 border-purple-200' : (kod.includes('PERALATAN') ? 'bg-sky-50 text-sky-600 border-sky-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'));
 
-                    let actTd = currentRole === 'sekolah' ? `<td class="py-2 px-3 text-center sticky right-0 bg-white shadow-[-4px_0_10px_rgba(0,0,0,0.05)]"><button onclick="editAset('${item.id}')" class="text-blue-500 hover:bg-blue-50 p-1.5 rounded"><i class="fa-solid fa-pen-to-square"></i></button></td>` : '';
+                    let actTd = currentRole === 'sekolah' ? `<td class="py-2 px-3 text-center sticky right-0 bg-white shadow-[-4px_0_10px_rgba(0,0,0,0.05)]"><button onclick="editAset('${item.id}')" class="text-blue-500 hover:bg-blue-50 p-1.5 rounded" title="Edit Data"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="hapusAset('${item.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded ml-1" title="Hapus Data"><i class="fa-solid fa-trash"></i></button></td>` : '';
                     let tdNoSP = currentDataTab === 'pegawai' ? '' : `<td class="py-2 px-3">${item.no_sp || '-'}</td><td class="py-2 px-3 whitespace-nowrap">${formatTglDisplay(item.tgl_sp)}</td>`;
                     let tdMerek = currentDataTab === 'pegawai' ? '' : `<td class="py-2 px-3">${item.merek || '-'}</td>`;
                     let tdSPV = currentDataTab === 'modal' ? `<td class="py-2 px-3">${item.no_spv || '-'}</td><td class="py-2 px-3 whitespace-nowrap">${formatTglDisplay(item.tgl_spv)}</td>` : '';
@@ -2219,6 +2219,35 @@ batas_waktu_bos: document.getElementById('inp-batas-waktu').value
             update();
             timerInterval = setInterval(update, 1000);
         }
+        function hapusAset(id) {
+    Swal.fire({
+        title: 'Hapus Data?',
+        text: "Data yang dihapus tidak dapat dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#9ca3af',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            showLoading('Menghapus Data...');
+            try {
+                const res = await apiCall('hapusDataAset', { id: id });
+                hideLoading();
+                if(res.success) {
+                    Swal.fire('Terhapus!', 'Data berhasil dihapus.', 'success');
+                    loadDataAset(); 
+                } else {
+                    Swal.fire('Gagal', res.message, 'error');
+                }
+            } catch (err) {
+                hideLoading();
+                Swal.fire('Error', err.message, 'error');
+            }
+        }
+    });
+}
     </script>
 </body>
 </html>
